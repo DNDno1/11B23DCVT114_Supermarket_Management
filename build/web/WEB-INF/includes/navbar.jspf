@@ -1,0 +1,40 @@
+<%@page import="model.User4, util.HtmlUtil" pageEncoding="UTF-8"%>
+<%
+    User4 navUser = (User4) session.getAttribute("currentUser");
+    String ctx = request.getContextPath();
+    String homeHref = ctx + "/login";
+    if (navUser != null) {
+        if ("Customer".equalsIgnoreCase(navUser.getRole())) homeHref = ctx + "/customer";
+        else if ("ManagementStaff".equalsIgnoreCase(navUser.getRole())) homeHref = ctx + "/manager";
+        else if ("WarehouseStaff".equalsIgnoreCase(navUser.getRole())) homeHref = ctx + "/warehouse";
+        else if ("Saler".equalsIgnoreCase(navUser.getRole())) homeHref = ctx + "/saler";
+    }
+%>
+<header class="navbar">
+    <a href="<%=homeHref%>" class="navbar-brand">Siêu thị trực tuyến</a>
+    <div class="navbar-links">
+        <% if (navUser != null) { %>
+            <% if ("Customer".equalsIgnoreCase(navUser.getRole())) { %>
+                <a href="<%=ctx%>/customer">Trang chủ</a>
+                <a href="<%=ctx%>/customer/search">Tìm kiếm hàng hóa</a>
+                <a href="<%=ctx%>/customer/order">Giỏ hàng &amp; Đặt hàng</a>
+            <% } else if ("ManagementStaff".equalsIgnoreCase(navUser.getRole())) { %>
+                <a href="<%=ctx%>/manager">Trang chủ</a>
+                <a href="<%=ctx%>/manager/stats">Báo cáo thống kê</a>
+            <% } else if ("WarehouseStaff".equalsIgnoreCase(navUser.getRole())) { %>
+                <a href="<%=ctx%>/warehouse">Trang chủ</a>
+                <a href="<%=ctx%>/warehouse/manage">Quản lý thông tin</a>
+                <a href="<%=ctx%>/warehouse/import">Nhập hàng</a>
+                <a href="<%=ctx%>/warehouse/orders">Xuất hàng online</a>
+            <% } else if ("Saler".equalsIgnoreCase(navUser.getRole())) { %>
+                <a href="<%=ctx%>/saler">Trang chủ</a>
+                <a href="<%=ctx%>/saler/sale">Bán hàng tại quầy</a>
+            <% } %>
+            <span class="user-badge"><%=HtmlUtil.esc(navUser.getName())%> (<%=HtmlUtil.esc(navUser.getRole())%>)</span>
+            <a href="<%=ctx%>/logout">Đăng xuất</a>
+        <% } else { %>
+            <a href="<%=ctx%>/login">Đăng nhập</a>
+            <a href="<%=ctx%>/register">Đăng ký</a>
+        <% } %>
+    </div>
+</header>
