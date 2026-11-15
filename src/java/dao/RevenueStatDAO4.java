@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import model.RevenueStatistic4;
 
 /**
- * DAO for overall Revenue Statistics (Direct Counter Sales, Online Orders, and Import Costs).
+ * DAO for overall Revenue Statistics: getRevenueStat().
  */
 public class RevenueStatDAO4 extends DAO4 {
 
@@ -42,7 +42,7 @@ public class RevenueStatDAO4 extends DAO4 {
         }
 
         ImportInvoiceDAO4 importDao = new ImportInvoiceDAO4();
-        stat.setImportInvoices(importDao.getImportInvoicesByDateRange(startDate, endDate));
+        stat.setImportInvoices(importDao.getImportInvoice(startDate, endDate));
         return stat;
     }
 

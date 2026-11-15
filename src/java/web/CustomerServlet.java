@@ -76,7 +76,7 @@ public class CustomerServlet extends HttpServlet {
             throws ServletException, IOException {
         Customer4 customer = (Customer4) WebHelper.getCurrentUser(request);
         try {
-            request.setAttribute("orders", orderDAO.getOrdersByCustomer(customer.getId()));
+            request.setAttribute("orders", orderDAO.getOrder(customer.getId()));
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi tải lịch sử đơn hàng: " + e.getMessage());
         }
@@ -99,6 +99,15 @@ public class CustomerServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/Customer/SearchView4.jsp").forward(request, response);
     }
 
+    private Item4 findItem(int id) throws SQLException {
+        for (Item4 item : itemDAO.getItem(String.valueOf(id))) {
+            if (item.getId() == id) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     private void showItemDetail(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
@@ -107,7 +116,7 @@ public class CustomerServlet extends HttpServlet {
             return;
         }
         try {
-            Item4 item = itemDAO.getItemById(id);
+            Item4 item = findItem(id);
             if (item == null) {
                 request.setAttribute("error", "Không tìm thấy sản phẩm.");
             }
@@ -137,7 +146,7 @@ public class CustomerServlet extends HttpServlet {
         String goOrder = request.getParameter("goOrder");
 
         try {
-            Item4 item = itemDAO.getItemById(itemId);
+            Item4 item = findItem(itemId);
             if (item == null) {
                 response.sendRedirect(request.getContextPath() + "/customer/search");
                 return;
@@ -201,7 +210,7 @@ public class CustomerServlet extends HttpServlet {
         request.setAttribute("cart", cart);
         request.setAttribute("totalAmount", totalAmount);
         try {
-            request.setAttribute("orders", orderDAO.getOrdersByCustomer(customer.getId()));
+            request.setAttribute("orders", orderDAO.getOrder(customer.getId()));
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi tải danh sách đơn hàng: " + e.getMessage());
         }
@@ -230,7 +239,7 @@ public class CustomerServlet extends HttpServlet {
             int itemId = WebHelper.parseInt(request.getParameter("itemId"), -1);
             int quantity = WebHelper.parseInt(request.getParameter("quantity"), 0);
             try {
-                Item4 latest = itemDAO.getItemById(itemId);
+                Item4 latest = findItem(itemId);
                 for (OrderItem4 oi : cart) {
                     if (oi.getItem().getId() == itemId) {
                         if (quantity <= 0) {
@@ -273,7 +282,7 @@ public class CustomerServlet extends HttpServlet {
             order.setItems(new ArrayList<>(cart));
 
             try {
-                orderDAO.createOrder(order);
+                orderDAO.addOrderItem(order);
                 cart.clear();
                 request.setAttribute("success", "Đặt hàng trực tuyến thành công! Mã đơn hàng: #" + order.getId()
                         + ". Đơn hàng đang chờ nhân viên kho duyệt và xuất hàng.");

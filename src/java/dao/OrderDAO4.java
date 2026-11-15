@@ -14,7 +14,7 @@ import model.OrderItem4;
 import model.WarehouseStaff4;
 
 /**
- * DAO for Online Orders created by customers and exported by warehouse staff.
+ * DAO for Online Orders: addOrderItem(), getOrder(), updateOrder().
  */
 public class OrderDAO4 extends DAO4 {
 
@@ -42,7 +42,7 @@ public class OrderDAO4 extends DAO4 {
             + "INNER JOIN tblItem4 i ON oi.tblItem4id = i.id "
             + "WHERE oi.tblOrder4id = ?";
 
-    private static final String UPDATE_ORDER_STATUS_SQL =
+    private static final String UPDATE_ORDER_SQL =
             "UPDATE tblOrder4 SET status = ?, tblWarehouseStaff4id = ? WHERE id = ?";
 
     public OrderDAO4() {
@@ -50,9 +50,9 @@ public class OrderDAO4 extends DAO4 {
     }
 
     /**
-     * Creates an online order, saves its items, and reserves stock in a single transaction.
+     * Creates an online order, saves its order items, and reserves stock in a single transaction.
      */
-    public boolean createOrder(Order4 order) throws SQLException {
+    public boolean addOrderItem(Order4 order) throws SQLException {
         try (Connection conn = openConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -102,7 +102,10 @@ public class OrderDAO4 extends DAO4 {
         }
     }
 
-    public List<Order4> getOrdersByCustomer(int customerId) throws SQLException {
+    /**
+     * Returns online orders for a specific customer.
+     */
+    public List<Order4> getOrder(int customerId) throws SQLException {
         List<Order4> list = new ArrayList<>();
         String sql = SELECT_ORDERS_BASE + "WHERE o.tblCustomer4id = ? ORDER BY o.id DESC";
         try (Connection conn = openConnection();
@@ -117,35 +120,23 @@ public class OrderDAO4 extends DAO4 {
         return list;
     }
 
-    public List<Order4> getAllOrders() throws SQLException {
+    /**
+     * Returns all online orders with their items for warehouse staff browsing and exporting.
+     */
+    public List<Order4> getOrder() throws SQLException {
         List<Order4> list = new ArrayList<>();
         String sql = SELECT_ORDERS_BASE + "ORDER BY CASE WHEN o.status = 'Pending' THEN 0 ELSE 1 END, o.id DESC";
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapOrder(rs));
-            }
-        }
-        return list;
-    }
-
-    public Order4 getOrderById(int orderId) throws SQLException {
-        String sql = SELECT_ORDERS_BASE + "WHERE o.id = ?";
-        Order4 order = null;
         try (Connection conn = openConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, orderId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        order = mapOrder(rs);
-                    }
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapOrder(rs));
                 }
             }
-            if (order != null) {
+            for (Order4 order : list) {
                 List<OrderItem4> items = new ArrayList<>();
                 try (PreparedStatement psItems = conn.prepareStatement(SELECT_ORDER_ITEMS_SQL)) {
-                    psItems.setInt(1, orderId);
+                    psItems.setInt(1, order.getId());
                     try (ResultSet rsItems = psItems.executeQuery()) {
                         while (rsItems.next()) {
                             Item4 item = new Item4();
@@ -166,12 +157,15 @@ public class OrderDAO4 extends DAO4 {
                 order.setItems(items);
             }
         }
-        return order;
+        return list;
     }
 
-    public boolean updateOrderStatus(int orderId, int warehouseStaffId, String status) throws SQLException {
+    /**
+     * Updates order status and warehouse staff when confirming order export (updateOrder).
+     */
+    public boolean updateOrder(int orderId, int warehouseStaffId, String status) throws SQLException {
         try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(UPDATE_ORDER_STATUS_SQL)) {
+             PreparedStatement ps = conn.prepareStatement(UPDATE_ORDER_SQL)) {
             ps.setString(1, status);
             ps.setInt(2, warehouseStaffId);
             ps.setInt(3, orderId);

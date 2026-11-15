@@ -96,18 +96,12 @@
             </div>
 
             <form action="<%=request.getContextPath()%>/saler/bill" method="post" style="margin-top:18px;">
-                <div class="grid">
-                    <div class="form-group">
-                        <label for="customerKey">Mã thành viên / Username khách hàng (tùy chọn)</label>
-                        <input id="customerKey" type="text" name="customerKey" class="form-control" placeholder="VD: CUS-0004 hoặc customer1">
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentMethod">Phương thức thanh toán</label>
-                        <select id="paymentMethod" name="paymentMethod" class="form-control">
-                            <option value="Tiền mặt">Tiền mặt</option>
-                            <option value="Ví điện tử / QR">Ví điện tử / QR</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Phương thức thanh toán</label>
+                    <select id="paymentMethod" name="paymentMethod" class="form-control">
+                        <option value="Tiền mặt">Tiền mặt</option>
+                        <option value="Ví điện tử / QR">Ví điện tử / QR</option>
+                    </select>
                 </div>
                 <div class="actions-row">
                     <button type="submit" class="btn btn-primary">Xác nhận hoàn tất giao dịch</button>

@@ -11,7 +11,7 @@ import model.Item4;
 import model.Supplier4;
 
 /**
- * DAO for searching and managing Item entities.
+ * DAO for searching and managing Item entities: getItem(), addItem(), updateItem(), deleteItem().
  */
 public class ItemDAO4 extends DAO4 {
 
@@ -22,13 +22,6 @@ public class ItemDAO4 extends DAO4 {
             + "LEFT JOIN tblSupplier4 s ON i.tblSupplier4id = s.id "
             + "WHERE i.name LIKE ? OR CAST(i.id AS CHAR) LIKE ? OR i.note LIKE ? "
             + "ORDER BY i.id ASC";
-
-    private static final String SELECT_BY_ID_SQL =
-            "SELECT i.*, s.name AS sup_name, s.address AS sup_address, s.email AS sup_email, "
-            + "s.phonenumber AS sup_phone, s.note AS sup_note "
-            + "FROM tblItem4 i "
-            + "LEFT JOIN tblSupplier4 s ON i.tblSupplier4id = s.id "
-            + "WHERE i.id = ?";
 
     private static final String INSERT_ITEM_SQL =
             "INSERT INTO tblItem4 (name, quantity, price, ImportPrice, note, tblSupplier4id) VALUES (?, ?, ?, ?, ?, ?)";
@@ -59,19 +52,6 @@ public class ItemDAO4 extends DAO4 {
             }
         }
         return list;
-    }
-
-    public Item4 getItemById(int id) throws SQLException {
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapItem(rs);
-                }
-            }
-        }
-        return null;
     }
 
     public boolean addItem(Item4 item) throws SQLException {

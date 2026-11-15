@@ -11,12 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import model.ImportInvoice4;
 import model.Item4;
+import model.ItemStatistic4;
 import model.Supplier4;
 import model.SupplierStatistic4;
 import model.WarehouseStaff4;
 
 /**
- * DAO for managing Import Invoices and querying import history by supplier, item, or date range.
+ * DAO for managing Import Invoices: addImportInvoice(), getImportInvoice().
  */
 public class ImportInvoiceDAO4 extends DAO4 {
 
@@ -85,30 +86,31 @@ public class ImportInvoiceDAO4 extends DAO4 {
     }
 
     /**
-     * Diagram-aligned signature returning import invoices for a SupplierStatistic4.
+     * Returns import invoices for a SupplierStatistic4 in a date range.
      */
     public List<ImportInvoice4> getImportInvoice(SupplierStatistic4 s, String startDate, String endDate)
-            throws SQLException {
-        return getImportInvoicesBySupplier(s.getId(), startDate, endDate);
-    }
-
-    public List<ImportInvoice4> getImportInvoicesBySupplier(int supplierId, String startDate, String endDate)
             throws SQLException {
         String sql = BASE_SELECT
                 + "WHERE s.id = ? AND imp.Datetime BETWEEN ? AND ? "
                 + "ORDER BY imp.Datetime DESC, imp.id DESC";
-        return queryListWithDateRange(sql, supplierId, startDate, endDate);
+        return queryListWithDateRange(sql, s.getId(), startDate, endDate);
     }
 
-    public List<ImportInvoice4> getImportInvoicesByItem(int itemId, String startDate, String endDate)
+    /**
+     * Returns import invoices for an ItemStatistic4 in a date range.
+     */
+    public List<ImportInvoice4> getImportInvoice(ItemStatistic4 item, String startDate, String endDate)
             throws SQLException {
         String sql = BASE_SELECT
                 + "WHERE i.id = ? AND imp.Datetime BETWEEN ? AND ? "
                 + "ORDER BY imp.Datetime DESC, imp.id DESC";
-        return queryListWithDateRange(sql, itemId, startDate, endDate);
+        return queryListWithDateRange(sql, item.getId(), startDate, endDate);
     }
 
-    public List<ImportInvoice4> getImportInvoicesByDateRange(String startDate, String endDate)
+    /**
+     * Returns all import invoices in a date range (for RevenueStatisticView4 and InvoiceDetailView4).
+     */
+    public List<ImportInvoice4> getImportInvoice(String startDate, String endDate)
             throws SQLException {
         List<ImportInvoice4> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE imp.Datetime BETWEEN ? AND ? ORDER BY imp.Datetime DESC, imp.id DESC";
@@ -123,20 +125,6 @@ public class ImportInvoiceDAO4 extends DAO4 {
             }
         }
         return list;
-    }
-
-    public ImportInvoice4 getImportInvoiceById(int id) throws SQLException {
-        String sql = BASE_SELECT + "WHERE imp.id = ?";
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapImportInvoice(rs);
-                }
-            }
-        }
-        return null;
     }
 
     private List<ImportInvoice4> queryListWithDateRange(String sql, int targetId, String startDate, String endDate)

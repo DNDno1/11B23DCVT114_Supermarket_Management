@@ -98,8 +98,16 @@ public class ManagementServlet extends HttpServlet {
             return;
         }
         try {
-            ItemStatistic4 itemStat = itemStatDAO.getItemStatById(itemId, startDate, endDate);
-            List<ImportInvoice4> invoices = importInvoiceDAO.getImportInvoicesByItem(itemId, startDate, endDate);
+            ItemStatistic4 itemStat = null;
+            for (ItemStatistic4 st : itemStatDAO.getItemStat("", startDate, endDate)) {
+                if (st.getId() == itemId) {
+                    itemStat = st;
+                    break;
+                }
+            }
+            List<ImportInvoice4> invoices = itemStat != null
+                    ? importInvoiceDAO.getImportInvoice(itemStat, startDate, endDate)
+                    : List.of();
             request.setAttribute("itemStat", itemStat);
             request.setAttribute("invoices", invoices);
         } catch (SQLException e) {
@@ -146,7 +154,13 @@ public class ManagementServlet extends HttpServlet {
             return;
         }
         try {
-            SupplierStatistic4 supStat = supplierStatDAO.getSupplierStatById(supplierId, startDate, endDate);
+            SupplierStatistic4 supStat = null;
+            for (SupplierStatistic4 st : supplierStatDAO.getSupplierStat("", startDate, endDate)) {
+                if (st.getId() == supplierId) {
+                    supStat = st;
+                    break;
+                }
+            }
             List<ImportInvoice4> invoices = supStat != null
                     ? importInvoiceDAO.getImportInvoice(supStat, startDate, endDate)
                     : List.of();
@@ -203,7 +217,15 @@ public class ManagementServlet extends HttpServlet {
 
         if (id > 0) {
             try {
-                ImportInvoice4 invoice = importInvoiceDAO.getImportInvoiceById(id);
+                String rangeStart = (startDate != null && !startDate.isBlank()) ? startDate : "1970-01-01";
+                String rangeEnd = (endDate != null && !endDate.isBlank()) ? endDate : "2099-12-31";
+                ImportInvoice4 invoice = null;
+                for (ImportInvoice4 inv : importInvoiceDAO.getImportInvoice(rangeStart, rangeEnd)) {
+                    if (inv.getId() == id) {
+                        invoice = inv;
+                        break;
+                    }
+                }
                 request.setAttribute("invoice", invoice);
                 if (invoice == null) {
                     request.setAttribute("error", "Không tìm thấy hóa đơn nhập #" + id);

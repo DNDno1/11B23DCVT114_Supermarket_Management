@@ -135,12 +135,6 @@ public class AuthServlet extends HttpServlet {
         }
 
         try {
-            if (customerDAO.existsUsername(username.trim())) {
-                request.setAttribute("error", "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.");
-                request.getRequestDispatcher("/WEB-INF/Customer/RegisterView4.jsp").forward(request, response);
-                return;
-            }
-
             formCustomer.setName(name.trim());
             formCustomer.setUsername(username.trim());
             formCustomer.setPassword(password);

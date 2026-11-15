@@ -1,6 +1,5 @@
 package web;
 
-import dao.CustomerDAO4;
 import dao.ItemDAO4;
 import dao.SaleInvoiceDAO4;
 import jakarta.servlet.ServletException;
@@ -16,7 +15,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import model.Customer4;
 import model.Item4;
 import model.SaleInvoice4;
 import model.SaleInvoiceItem4;
@@ -30,7 +28,6 @@ public class SalerServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final ItemDAO4 itemDAO = new ItemDAO4();
-    private final CustomerDAO4 customerDAO = new CustomerDAO4();
     private final SaleInvoiceDAO4 saleInvoiceDAO = new SaleInvoiceDAO4();
 
     @Override
@@ -73,6 +70,15 @@ public class SalerServlet extends HttpServlet {
         }
     }
 
+    private Item4 findItem(int id) throws SQLException {
+        for (Item4 item : itemDAO.getItem(String.valueOf(id))) {
+            if (item.getId() == id) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     private List<SaleInvoiceItem4> getSaleBill(HttpSession session) {
         List<SaleInvoiceItem4> list = (List<SaleInvoiceItem4>) session.getAttribute("saleBill");
@@ -86,7 +92,7 @@ public class SalerServlet extends HttpServlet {
     private void showSalerHome(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            request.setAttribute("recentInvoices", saleInvoiceDAO.getRecentSaleInvoices());
+            request.setAttribute("recentInvoices", saleInvoiceDAO.getSaleItem());
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi tải hóa đơn gần đây: " + e.getMessage());
         }
@@ -124,7 +130,7 @@ public class SalerServlet extends HttpServlet {
             int itemId = WebHelper.parseInt(request.getParameter("itemId"), -1);
             int quantity = WebHelper.parseInt(request.getParameter("quantity"), 1);
             try {
-                Item4 item = itemDAO.getItemById(itemId);
+                Item4 item = findItem(itemId);
                 if (item == null) {
                     request.setAttribute("error", "Không tìm thấy mã sản phẩm #" + itemId);
                 } else if (quantity <= 0 || quantity > item.getQuantity()) {
@@ -192,7 +198,6 @@ public class SalerServlet extends HttpServlet {
             return;
         }
 
-        String customerKey = request.getParameter("customerKey");
         String paymentMethod = request.getParameter("paymentMethod");
         int total = 0;
         for (SaleInvoiceItem4 sii : saleBill) {
@@ -200,25 +205,15 @@ public class SalerServlet extends HttpServlet {
         }
 
         try {
-            Customer4 customer = null;
-            if (customerKey != null && !customerKey.isBlank()) {
-                customer = customerDAO.findCustomerByCodeOrUsername(customerKey);
-                if (customer == null) {
-                    request.setAttribute("error", "Không tìm thấy khách hàng thành viên với mã/username '" + customerKey + "'.");
-                    showBillPay(request, response);
-                    return;
-                }
-            }
-
             Saler4 saler = (Saler4) WebHelper.getCurrentUser(request);
             SaleInvoice4 invoice = new SaleInvoice4();
             invoice.setDatetime(Date.valueOf(LocalDate.now()));
             invoice.setTotalAmount(total);
             invoice.setSaler(saler);
-            invoice.setCustomer(customer);
+            invoice.setCustomer(null);
             invoice.setItems(new ArrayList<>(saleBill));
 
-            saleInvoiceDAO.createSaleInvoice(invoice);
+            saleInvoiceDAO.addSaleItem(invoice);
             saleBill.clear();
 
             request.setAttribute("completedInvoice", invoice);

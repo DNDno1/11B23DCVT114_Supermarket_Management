@@ -15,7 +15,7 @@ public class DAO4 {
     private static final String DEFAULT_DRIVER = "com.mysql.cj.jdbc.Driver";
     private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/supermarket_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String DEFAULT_USER = "root";
-    private static final String DEFAULT_PASSWORD = "vuighe.net";
+    private static final String DEFAULT_PASSWORD = "Vuighe.net1";
 
     private static String dbDriver = DEFAULT_DRIVER;
     private static String dbUrl = DEFAULT_URL;

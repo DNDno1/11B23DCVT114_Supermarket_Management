@@ -70,6 +70,8 @@ public class WarehouseServlet extends HttpServlet {
             showItemImport(request, response);
         } else if ("/orders".equals(pathInfo)) {
             showOrders(request, response);
+        } else if ("/orders/detail".equals(pathInfo)) {
+            showOrderDetail(request, response);
         } else {
             response.sendRedirect(request.getContextPath() + "/warehouse");
         }
@@ -142,11 +144,29 @@ public class WarehouseServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/WarehouseStaff/ItemAddView4.jsp").forward(request, response);
     }
 
+    private Item4 findItem(int id) throws SQLException {
+        for (Item4 item : itemDAO.getItem(String.valueOf(id))) {
+            if (item.getId() == id) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private Supplier4 findSupplier(int id) throws SQLException {
+        for (Supplier4 s : supplierDAO.getSupplier("")) {
+            if (s.getId() == id) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     private void showItemEdit(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
         try {
-            Item4 item = itemDAO.getItemById(id);
+            Item4 item = findItem(id);
             if (item == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/items");
                 return;
@@ -179,7 +199,7 @@ public class WarehouseServlet extends HttpServlet {
         item.setNote(note != null ? note.trim() : "");
 
         try {
-            Supplier4 sup = supplierDAO.getSupplierById(supplierId);
+            Supplier4 sup = findSupplier(supplierId);
             item.setSupplier(sup);
 
             if (item.getName().isEmpty() || sup == null || price <= 0 || importPrice <= 0) {
@@ -210,7 +230,7 @@ public class WarehouseServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
         try {
-            Item4 item = itemDAO.getItemById(id);
+            Item4 item = findItem(id);
             if (item == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/items");
                 return;
@@ -248,7 +268,7 @@ public class WarehouseServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
         try {
-            Supplier4 supplier = supplierDAO.getSupplierById(id);
+            Supplier4 supplier = findSupplier(id);
             if (supplier == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/suppliers");
                 return;
@@ -302,7 +322,7 @@ public class WarehouseServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
         try {
-            Supplier4 sup = supplierDAO.getSupplierById(id);
+            Supplier4 sup = findSupplier(id);
             if (sup == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/suppliers");
                 return;
@@ -427,7 +447,7 @@ public class WarehouseServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = WebHelper.parseInt(request.getParameter("id"), -1);
         try {
-            Item4 item = itemDAO.getItemById(id);
+            Item4 item = findItem(id);
             if (item == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/import");
                 return;
@@ -446,7 +466,7 @@ public class WarehouseServlet extends HttpServlet {
         String duetimeStr = request.getParameter("duetime");
 
         try {
-            Item4 item = itemDAO.getItemById(itemId);
+            Item4 item = findItem(itemId);
             if (item == null) {
                 response.sendRedirect(request.getContextPath() + "/warehouse/import");
                 return;
@@ -472,7 +492,7 @@ public class WarehouseServlet extends HttpServlet {
             invoice.setItem(item);
 
             importInvoiceDAO.addImportInvoice(invoice);
-            Item4 updatedItem = itemDAO.getItemById(itemId);
+            Item4 updatedItem = findItem(itemId);
             request.setAttribute("item", updatedItem);
             request.setAttribute("createdInvoice", invoice);
             request.setAttribute("success", "Nhập hàng thành công! Đã tạo hóa đơn nhập #" + invoice.getId()
@@ -488,16 +508,46 @@ public class WarehouseServlet extends HttpServlet {
             throws ServletException, IOException {
         consumeFlash(request);
         int selectedId = WebHelper.parseInt(request.getParameter("id"), -1);
+        if (selectedId > 0) {
+            showOrderDetail(request, response);
+            return;
+        }
         try {
-            List<Order4> orders = orderDAO.getAllOrders();
+            List<Order4> orders = orderDAO.getOrder();
             request.setAttribute("orders", orders);
-            if (selectedId > 0) {
-                request.setAttribute("selectedOrder", orderDAO.getOrderById(selectedId));
-            }
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi tải danh sách đơn hàng trực tuyến: " + e.getMessage());
         }
         request.getRequestDispatcher("/WEB-INF/WarehouseStaff/OrderExportView4.jsp").forward(request, response);
+    }
+
+    private void showOrderDetail(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        consumeFlash(request);
+        int selectedId = WebHelper.parseInt(request.getParameter("id"), -1);
+        if (selectedId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/warehouse/orders");
+            return;
+        }
+        try {
+            List<Order4> orders = orderDAO.getOrder();
+            Order4 selectedOrder = null;
+            for (Order4 o : orders) {
+                if (o.getId() == selectedId) {
+                    selectedOrder = o;
+                    break;
+                }
+            }
+            if (selectedOrder == null) {
+                request.getSession().setAttribute("flashError", "Không tìm thấy đơn hàng #" + selectedId + ".");
+                response.sendRedirect(request.getContextPath() + "/warehouse/orders");
+                return;
+            }
+            request.setAttribute("selectedOrder", selectedOrder);
+        } catch (SQLException e) {
+            request.setAttribute("error", "Lỗi tải chi tiết đơn hàng: " + e.getMessage());
+        }
+        request.getRequestDispatcher("/WEB-INF/WarehouseStaff/OrderDetailView4.jsp").forward(request, response);
     }
 
     private void exportOrder(HttpServletRequest request, HttpServletResponse response)
@@ -509,7 +559,7 @@ public class WarehouseServlet extends HttpServlet {
         }
         WarehouseStaff4 staff = (WarehouseStaff4) WebHelper.getCurrentUser(request);
         try {
-            orderDAO.updateOrderStatus(orderId, staff.getId(), newStatus);
+            orderDAO.updateOrder(orderId, staff.getId(), newStatus);
             request.getSession().setAttribute("flashSuccess",
                     "Đã xác nhận xuất đơn hàng #" + orderId + " cho nhân viên giao hàng (Trạng thái: " + newStatus + ").");
         } catch (SQLException e) {

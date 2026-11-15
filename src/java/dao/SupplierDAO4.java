@@ -10,14 +10,12 @@ import java.util.List;
 import model.Supplier4;
 
 /**
- * DAO for CRUD operations on Suppliers.
+ * DAO for CRUD operations on Suppliers: getSupplier(), addSupplier(), updateSupplier(), deleteSupplier().
  */
 public class SupplierDAO4 extends DAO4 {
 
     private static final String SEARCH_SUPPLIERS_SQL =
             "SELECT * FROM tblSupplier4 WHERE name LIKE ? OR address LIKE ? OR phonenumber LIKE ? ORDER BY id ASC";
-    private static final String SELECT_BY_ID_SQL =
-            "SELECT * FROM tblSupplier4 WHERE id = ?";
     private static final String INSERT_SUPPLIER_SQL =
             "INSERT INTO tblSupplier4 (name, address, email, phonenumber, note) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_SUPPLIER_SQL =
@@ -44,19 +42,6 @@ public class SupplierDAO4 extends DAO4 {
             }
         }
         return list;
-    }
-
-    public Supplier4 getSupplierById(int id) throws SQLException {
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapSupplier(rs);
-                }
-            }
-        }
-        return null;
     }
 
     public boolean addSupplier(Supplier4 supplier) throws SQLException {

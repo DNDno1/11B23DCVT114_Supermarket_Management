@@ -9,13 +9,12 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import model.Customer4;
-import model.Item4;
 import model.SaleInvoice4;
 import model.SaleInvoiceItem4;
 import model.Saler4;
 
 /**
- * DAO for counter Sale Invoices created by Saler staff.
+ * DAO for counter Sale Invoices created by Saler staff: addSaleItem(), getSaleItem().
  */
 public class SaleInvoiceDAO4 extends DAO4 {
 
@@ -35,12 +34,6 @@ public class SaleInvoiceDAO4 extends DAO4 {
             + "LEFT JOIN tblCustomer4 c ON si.tblCustomer4id = c.tblUser4id "
             + "LEFT JOIN tblUser4 uc ON c.tblUser4id = uc.id ";
 
-    private static final String SELECT_SALE_ITEMS_SQL =
-            "SELECT sii.*, i.name AS item_name, i.price AS item_price "
-            + "FROM tblSaleInvoiceItem4 sii "
-            + "INNER JOIN tblItem4 i ON sii.tblItem4id = i.id "
-            + "WHERE sii.tblSaleInvoice4id = ?";
-
     public SaleInvoiceDAO4() {
         super();
     }
@@ -48,7 +41,7 @@ public class SaleInvoiceDAO4 extends DAO4 {
     /**
      * Persists a counter sale invoice, its line items, and decrements inventory atomically.
      */
-    public boolean createSaleInvoice(SaleInvoice4 invoice) throws SQLException {
+    public boolean addSaleItem(SaleInvoice4 invoice) throws SQLException {
         try (Connection conn = openConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -102,7 +95,7 @@ public class SaleInvoiceDAO4 extends DAO4 {
         }
     }
 
-    public List<SaleInvoice4> getRecentSaleInvoices() throws SQLException {
+    public List<SaleInvoice4> getSaleItem() throws SQLException {
         List<SaleInvoice4> list = new ArrayList<>();
         String sql = SELECT_SALES_BASE + "ORDER BY si.id DESC LIMIT 20";
         try (Connection conn = openConnection();
@@ -113,44 +106,6 @@ public class SaleInvoiceDAO4 extends DAO4 {
             }
         }
         return list;
-    }
-
-    public SaleInvoice4 getSaleInvoiceById(int id) throws SQLException {
-        SaleInvoice4 invoice = null;
-        String sql = SELECT_SALES_BASE + "WHERE si.id = ?";
-        try (Connection conn = openConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, id);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        invoice = mapSaleInvoice(rs);
-                    }
-                }
-            }
-            if (invoice != null) {
-                List<SaleInvoiceItem4> items = new ArrayList<>();
-                try (PreparedStatement psItems = conn.prepareStatement(SELECT_SALE_ITEMS_SQL)) {
-                    psItems.setInt(1, id);
-                    try (ResultSet rsItems = psItems.executeQuery()) {
-                        while (rsItems.next()) {
-                            Item4 item = new Item4();
-                            item.setId(rsItems.getInt("tblItem4id"));
-                            item.setName(rsItems.getString("item_name"));
-                            item.setPrice(rsItems.getInt("item_price"));
-
-                            SaleInvoiceItem4 sii = new SaleInvoiceItem4();
-                            sii.setId(rsItems.getInt("id"));
-                            sii.setQuantity(rsItems.getInt("quantity"));
-                            sii.setTotalAmount(rsItems.getInt("totalAmount"));
-                            sii.setItem(item);
-                            items.add(sii);
-                        }
-                    }
-                }
-                invoice.setItems(items);
-            }
-        }
-        return invoice;
     }
 
     private SaleInvoice4 mapSaleInvoice(ResultSet rs) throws SQLException {
